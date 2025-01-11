@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { User } from './entities/user.entity';
 import { Url } from './entities/url.entity';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { UrlsModule } from './urls/urls.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { UsersModule } from './users/users.module';
     }),
     TypeOrmModule.forFeature([User, Url]),
     UsersModule,
+    AuthModule,
+    UrlsModule,
   ],
   controllers: [],
   providers: [],
