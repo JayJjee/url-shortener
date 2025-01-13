@@ -11,6 +11,15 @@ export class UrlsService {
   ) {}
 
   async createShortUrl(originalUrl: string, userId: number | null) {
+    const existingUrl = await this.urlRepository.findOne({
+      where: { originalUrl, userId, deletedAt: null },
+    });
+
+    console.log(existingUrl);
+    if (existingUrl) {
+      return existingUrl;
+    }
+
     const shortUrl = this.generateShortUrl();
 
     const url = this.urlRepository.create({
@@ -37,11 +46,15 @@ export class UrlsService {
     }
   }
 
-  async listUrlsByUser(user: number) {
-    return await this.urlRepository.find({
-      where: { userId: user, deletedAt: null }, // Filtrar só ativas
-      order: { clicks: 'DESC' },
-    });
+  async listUrlsByUser(userId: number) {
+    const result = await this.urlRepository
+      .createQueryBuilder('url')
+      .where('url.userId = :userId', { userId: userId })
+      .andWhere('url.deletedAt IS NULL') //Tentativa por filtro explícito
+      .orderBy('url.clicks', 'DESC')
+      .getMany();
+    console.log('Resultado da busca:', result);
+    return result;
   }
 
   async updateUrl(originalUrl: string, userId: number) {

@@ -45,7 +45,6 @@ export class UrlsController {
   @Get('user/:userId')
   @UseGuards(JwtAuthGuard)
   async list(@Param('userId') userId: number) {
-    console.log(userId);
     return await this.urlsService.listUrlsByUser(userId);
   }
 

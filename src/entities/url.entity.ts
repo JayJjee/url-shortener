@@ -20,7 +20,7 @@ export class Url {
 
   @Column()
   @ManyToOne(() => User, (user) => user.urls, { nullable: true })
-  userId: number;
+  userId: number | null;
 
   @Column({ default: 0 })
   clicks: number;
