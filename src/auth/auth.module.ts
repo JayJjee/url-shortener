@@ -15,6 +15,7 @@ import { LocalStrategy } from './local.strategy';
       signOptions: { expiresIn: '60m' },
     }),
   ],
+  exports: [JwtModule],
   providers: [AuthService, LocalStrategy],
   controllers: [AuthController],
 })

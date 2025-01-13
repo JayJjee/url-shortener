@@ -19,7 +19,7 @@ export class User {
   @Column()
   password: string;
 
-  @OneToMany(() => Url, (url) => url.user)
+  @OneToMany(() => Url, (url) => url.userId)
   urls: Url[];
 
   @CreateDateColumn()

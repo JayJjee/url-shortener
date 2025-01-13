@@ -7,23 +7,23 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
-
 @Entity()
 export class Url {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   originalUrl: string;
 
   @Column({ unique: true })
   shortUrl: string;
 
+  @Column()
+  @ManyToOne(() => User, (user) => user.urls, { nullable: true })
+  userId: number;
+
   @Column({ default: 0 })
   clicks: number;
-
-  @ManyToOne(() => User, (user) => user.urls, { nullable: true })
-  user: User;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -31,6 +31,6 @@ export class Url {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ nullable: true })
-  deletedAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
 }
