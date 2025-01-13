@@ -2,48 +2,75 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Url } from '../entities/url.entity';
-import { customAlphabet } from 'nanoid';
 
 @Injectable()
 export class UrlsService {
-  private readonly nanoid = customAlphabet(
-    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-    8,
-  );
-
   constructor(
     @InjectRepository(Url)
     private readonly urlRepository: Repository<Url>,
   ) {}
 
-  // Criar uma URL curta
-  async createShortUrl(originalUrl: string, userId?: number): Promise<Url> {
-    const shortUrl = this.nanoid();
+  async createShortUrl(originalUrl: string, userId: number | null) {
+    const shortUrl = this.generateShortUrl();
 
-    const newUrl = this.urlRepository.create({
+    const url = this.urlRepository.create({
       originalUrl,
       shortUrl,
-      user: userId ? { id: userId } : null,
+      userId,
+      clicks: 0,
     });
-
-    return await this.urlRepository.save(newUrl);
-  }
-
-  async findByShortUrl(shortUrl: string): Promise<Url | null> {
-    return await this.urlRepository.findOne({
-      where: { shortUrl },
-    });
-  }
-
-  async incrementClicks(shortUrl: string): Promise<Url> {
-    const url = await this.findByShortUrl(shortUrl);
-
-    if (!url) {
-      throw new Error('URL não encontrada');
-    }
-
-    url.clicks += 1;
 
     return await this.urlRepository.save(url);
+  }
+
+  async findByShortUrl(shortUrl: string) {
+    return await this.urlRepository.findOne({
+      where: { shortUrl, deletedAt: null },
+    });
+  }
+
+  async incrementClicks(shortUrl: string) {
+    const url = await this.findByShortUrl(shortUrl);
+    if (url) {
+      url.clicks += 1;
+      await this.urlRepository.save(url);
+    }
+  }
+
+  async listUrlsByUser(user: number) {
+    return await this.urlRepository.find({
+      where: { userId: user, deletedAt: null }, // Filtrar só ativas
+      order: { clicks: 'DESC' },
+    });
+  }
+
+  async updateUrl(originalUrl: string, userId: number) {
+    const url = await this.urlRepository.findOne({
+      where: { originalUrl, userId, deletedAt: null },
+    });
+
+    if (!url) {
+      throw new Error('URL não encontrada ou não pertence ao usuário.');
+    }
+
+    url.shortUrl = this.generateShortUrl();
+    await this.urlRepository.save(url);
+  }
+
+  async deleteUrl(shortUrl: string, userId: number) {
+    const url = await this.urlRepository.findOne({
+      where: { shortUrl, userId, deletedAt: null },
+    });
+
+    if (!url) {
+      throw new Error('URL não encontrada ou não pertence ao usuário.');
+    }
+
+    url.deletedAt = new Date();
+    await this.urlRepository.save(url);
+  }
+
+  private generateShortUrl() {
+    return Math.random().toString(36).substring(2, 8); // Gera 6 caracteres aleatórios
   }
 }
