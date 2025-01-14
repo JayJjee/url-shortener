@@ -14,7 +14,10 @@ import {
 import { UrlsService } from './urls.service';
 import { CreateUrlDto } from '../dto/create-url.dto';
 import { Response } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth-guard';
+import { JwtAuthGuard } from '../auth/guard/jwt-auth-guard';
+
+import { TokenPayloadParam } from 'src/auth/param/token-payload.param';
+import { PayloadTokenDto } from 'src/dto/payload-token.dto';
 
 @Controller('urls')
 export class UrlsController {
@@ -23,6 +26,7 @@ export class UrlsController {
   @Post()
   async create(@Body() createUrlDto: CreateUrlDto) {
     const user = createUrlDto.userId ? createUrlDto.userId : null;
+    console.log('user', user);
 
     return await this.urlsService.createShortUrl(
       createUrlDto.originalUrl,
@@ -42,29 +46,27 @@ export class UrlsController {
     res.redirect(url.originalUrl);
   }
 
-  @Get('user/:userId')
   @UseGuards(JwtAuthGuard)
-  async list(@Param('userId') userId: number) {
-    return await this.urlsService.listUrlsByUser(userId);
+  @Get('all/user')
+  async list(@TokenPayloadParam() tokenPayload: PayloadTokenDto) {
+    return await this.urlsService.listUrlsByUser(tokenPayload);
   }
 
-  @Patch()
   @UseGuards(JwtAuthGuard)
+  @Patch()
   async update(
     @Body('originalUrl') originalUrl: string,
-    @Body() createUrlDto: CreateUrlDto,
+    @TokenPayloadParam() tokenPayload: PayloadTokenDto,
   ) {
-    const user = createUrlDto.userId;
-    return await this.urlsService.updateUrl(originalUrl, user);
+    return await this.urlsService.updateUrl(originalUrl, tokenPayload);
   }
 
-  @Delete(':shortUrl')
   @UseGuards(JwtAuthGuard)
+  @Delete(':shortUrl')
   async delete(
     @Param('shortUrl') shortUrl: string,
-    @Body() createUrlDto: CreateUrlDto,
+    @TokenPayloadParam() tokenPayload: PayloadTokenDto,
   ) {
-    const user = createUrlDto.userId;
-    return await this.urlsService.deleteUrl(shortUrl, user);
+    return await this.urlsService.deleteUrl(shortUrl, tokenPayload);
   }
 }

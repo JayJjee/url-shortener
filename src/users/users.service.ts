@@ -1,26 +1,34 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../entities/user.entity';
+import { HashingServiceProtocol } from 'src/auth/hash/hashing.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly hashingService: HashingServiceProtocol,
   ) {}
 
   async createUser(email: string, password: string): Promise<User> {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    try {
+      const hashedPassword = await this.hashingService.hash(password);
+      const newUser = this.userRepository.create({
+        email,
+        password: hashedPassword,
+      });
 
-    const newUser = this.userRepository.create({
-      email,
-      password: hashedPassword,
-    });
-
-    return this.userRepository.save(newUser);
+      return this.userRepository.save(newUser);
+    } catch (error) {
+      console.log(error);
+      throw new HttpException(
+        'Falha ao cadastrar usuario!',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   async findByEmail(email: string): Promise<User | undefined> {

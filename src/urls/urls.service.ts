@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Url } from '../entities/url.entity';
+import { PayloadTokenDto } from 'src/dto/payload-token.dto';
 
 @Injectable()
 export class UrlsService {
@@ -11,30 +12,52 @@ export class UrlsService {
   ) {}
 
   async createShortUrl(originalUrl: string, userId: number | null) {
-    const existingUrl = await this.urlRepository.findOne({
-      where: { originalUrl, userId, deletedAt: null },
-    });
-
-    console.log(existingUrl);
-    if (existingUrl) {
-      return existingUrl;
-    }
-
     const shortUrl = this.generateShortUrl();
 
-    const url = this.urlRepository.create({
-      originalUrl,
-      shortUrl,
-      userId,
-      clicks: 0,
-    });
+    if (userId !== null) {
+      const existingUrl = await this.urlRepository.findOne({
+        where: { originalUrl, userId, deletedAt: null },
+      });
 
-    return await this.urlRepository.save(url);
+      if (existingUrl) {
+        return existingUrl;
+      }
+
+      const url = this.urlRepository.create({
+        originalUrl,
+        shortUrl,
+        userId,
+        clicks: 0,
+      });
+
+      return await this.urlRepository.save(url);
+    } else {
+      const existingUrl = await this.urlRepository.findOneBy({
+        originalUrl,
+        userId: IsNull(),
+        deletedAt: IsNull(),
+      });
+
+      if (existingUrl) {
+        existingUrl.shortUrl = shortUrl;
+
+        return await this.urlRepository.save(existingUrl);
+      }
+
+      const url = this.urlRepository.create({
+        originalUrl,
+        shortUrl,
+        userId,
+        clicks: 0,
+      });
+
+      return await this.urlRepository.save(url);
+    }
   }
 
   async findByShortUrl(shortUrl: string) {
     return await this.urlRepository.findOne({
-      where: { shortUrl, deletedAt: null },
+      where: { shortUrl, deletedAt: IsNull() },
     });
   }
 
@@ -46,37 +69,77 @@ export class UrlsService {
     }
   }
 
-  async listUrlsByUser(userId: number) {
-    const result = await this.urlRepository
-      .createQueryBuilder('url')
-      .where('url.userId = :userId', { userId: userId })
-      .andWhere('url.deletedAt IS NULL') //Tentativa por filtro explícito
-      .orderBy('url.clicks', 'DESC')
-      .getMany();
+  async listUrlsByUser(tokenPayload: PayloadTokenDto) {
+    const result = await this.urlRepository.find({
+      where: {
+        userId: tokenPayload.sub,
+        deletedAt: IsNull(),
+      },
+      order: {
+        clicks: 'DESC',
+      },
+    });
+
+    if (result.length === 0) {
+      throw new HttpException(
+        'Usuário não possui links.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (result[0].userId != tokenPayload.sub) {
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
     console.log('Resultado da busca:', result);
     return result;
   }
 
-  async updateUrl(originalUrl: string, userId: number) {
+  async updateUrl(originalUrl: string, tokenPayload: PayloadTokenDto) {
+    const userId = tokenPayload.sub;
     const url = await this.urlRepository.findOne({
-      where: { originalUrl, userId, deletedAt: null },
+      where: { originalUrl, userId, deletedAt: IsNull() },
     });
 
     if (!url) {
-      throw new Error('URL não encontrada ou não pertence ao usuário.');
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (url.userId != tokenPayload.sub) {
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     url.shortUrl = this.generateShortUrl();
     await this.urlRepository.save(url);
   }
 
-  async deleteUrl(shortUrl: string, userId: number) {
+  async deleteUrl(shortUrl: string, tokenPayload: PayloadTokenDto) {
+    const userId = tokenPayload.sub;
     const url = await this.urlRepository.findOne({
-      where: { shortUrl, userId, deletedAt: null },
+      where: { shortUrl, userId, deletedAt: IsNull() },
     });
 
     if (!url) {
-      throw new Error('URL não encontrada ou não pertence ao usuário.');
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (url.userId != tokenPayload.sub) {
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     url.deletedAt = new Date();

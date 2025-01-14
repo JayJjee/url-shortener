@@ -2,11 +2,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from './user.entity';
 @Entity()
 export class Url {
   @PrimaryGeneratedColumn()
@@ -19,7 +17,6 @@ export class Url {
   shortUrl: string;
 
   @Column()
-  @ManyToOne(() => User, (user) => user.urls, { nullable: true })
   userId: number | null;
 
   @Column({ default: 0 })
