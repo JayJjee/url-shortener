@@ -98,7 +98,7 @@ export class UrlsService {
     return result;
   }
 
-  async updateUrl(originalUrl: string, tokenPayload: PayloadTokenDto) {
+  async updateShortUrl(originalUrl: string, tokenPayload: PayloadTokenDto) {
     const userId = tokenPayload.sub;
     const url = await this.urlRepository.findOne({
       where: { originalUrl, userId, deletedAt: IsNull() },
@@ -119,6 +119,47 @@ export class UrlsService {
     }
 
     url.shortUrl = this.generateShortUrl();
+    await this.urlRepository.save(url);
+  }
+
+  async updateOriginalUrl(
+    shortUrl: string,
+    updateUrl: string,
+    tokenPayload: PayloadTokenDto,
+  ) {
+    const userId = tokenPayload.sub;
+
+    const findUrl = await this.urlRepository.findOne({
+      where: { originalUrl: updateUrl, deletedAt: IsNull() },
+    });
+
+    const url = await this.urlRepository.findOne({
+      where: { shortUrl, userId, deletedAt: IsNull() },
+    });
+    console.log(url);
+
+    if (!url) {
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (findUrl && findUrl.originalUrl === updateUrl) {
+      throw new HttpException(
+        'URL já existente para usuário. É possível realizar a troca do atalho.',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    if (url.userId != tokenPayload.sub) {
+      throw new HttpException(
+        'URL não encontrada ou não pertence ao usuário.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    url.originalUrl = updateUrl;
     await this.urlRepository.save(url);
   }
 

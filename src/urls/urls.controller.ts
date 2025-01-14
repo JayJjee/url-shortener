@@ -53,12 +53,26 @@ export class UrlsController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch()
-  async update(
+  @Patch('shorturl')
+  async updateShortUrl(
     @Body('originalUrl') originalUrl: string,
     @TokenPayloadParam() tokenPayload: PayloadTokenDto,
   ) {
-    return await this.urlsService.updateUrl(originalUrl, tokenPayload);
+    return await this.urlsService.updateShortUrl(originalUrl, tokenPayload);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('originalurl')
+  async updateOriginalUrl(
+    @Body('shortUrl') shortUrl: string,
+    @Body('updateUrl') updateUrl: string,
+    @TokenPayloadParam() tokenPayload: PayloadTokenDto,
+  ) {
+    return await this.urlsService.updateOriginalUrl(
+      shortUrl,
+      updateUrl,
+      tokenPayload,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
