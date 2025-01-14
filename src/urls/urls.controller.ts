@@ -10,23 +10,28 @@ import {
   HttpException,
   HttpStatus,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UrlsService } from './urls.service';
 import { CreateUrlDto } from '../dto/create-url.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../auth/guard/jwt-auth-guard';
 
 import { TokenPayloadParam } from 'src/auth/param/token-payload.param';
 import { PayloadTokenDto } from 'src/dto/payload-token.dto';
+import { REQUEST_TOKEN_PAYLOAD_NAME } from 'src/auth/common/auth.constants';
+import { Public } from 'src/auth/common/public.decorator';
 
 @Controller('urls')
 export class UrlsController {
   constructor(private readonly urlsService: UrlsService) {}
 
+  @Public()
   @Post()
-  async create(@Body() createUrlDto: CreateUrlDto) {
-    const user = createUrlDto.userId ? createUrlDto.userId : null;
-    console.log('user', user);
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() createUrlDto: CreateUrlDto, @Req() request: Request) {
+    const tokenPayload = request[REQUEST_TOKEN_PAYLOAD_NAME];
+    const user = tokenPayload?.sub || null;
 
     return await this.urlsService.createShortUrl(
       createUrlDto.originalUrl,
