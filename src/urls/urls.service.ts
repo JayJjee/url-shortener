@@ -16,11 +16,13 @@ export class UrlsService {
 
     if (userId !== null) {
       const existingUrl = await this.urlRepository.findOne({
-        where: { originalUrl, userId, deletedAt: null },
+        where: { originalUrl, userId, deletedAt: IsNull() },
       });
 
       if (existingUrl) {
-        return existingUrl;
+        existingUrl.shortUrl = shortUrl;
+
+        return await this.urlRepository.save(existingUrl);
       }
 
       const url = this.urlRepository.create({
@@ -98,30 +100,6 @@ export class UrlsService {
     return result;
   }
 
-  async updateShortUrl(originalUrl: string, tokenPayload: PayloadTokenDto) {
-    const userId = tokenPayload.sub;
-    const url = await this.urlRepository.findOne({
-      where: { originalUrl, userId, deletedAt: IsNull() },
-    });
-
-    if (!url) {
-      throw new HttpException(
-        'URL não encontrada ou não pertence ao usuário.',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    if (url.userId != tokenPayload.sub) {
-      throw new HttpException(
-        'URL não encontrada ou não pertence ao usuário.',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    url.shortUrl = this.generateShortUrl();
-    await this.urlRepository.save(url);
-  }
-
   async updateOriginalUrl(
     shortUrl: string,
     updateUrl: string,
@@ -130,7 +108,7 @@ export class UrlsService {
     const userId = tokenPayload.sub;
 
     const findUrl = await this.urlRepository.findOne({
-      where: { originalUrl: updateUrl, deletedAt: IsNull() },
+      where: { originalUrl: updateUrl, userId, deletedAt: IsNull() },
     });
 
     const url = await this.urlRepository.findOne({
@@ -188,6 +166,6 @@ export class UrlsService {
   }
 
   private generateShortUrl() {
-    return Math.random().toString(36).substring(2, 8); // Gera 6 caracteres aleatórios
+    return Math.random().toString(36).substring(2, 8);
   }
 }

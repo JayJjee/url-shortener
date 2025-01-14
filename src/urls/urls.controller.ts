@@ -42,7 +42,7 @@ export class UrlsController {
       throw new HttpException('URL não encontrada', HttpStatus.NOT_FOUND);
     }
 
-    await this.urlsService.incrementClicks(shortUrl); // Conta o clique
+    await this.urlsService.incrementClicks(shortUrl);
     res.redirect(url.originalUrl);
   }
 
@@ -50,15 +50,6 @@ export class UrlsController {
   @Get('all/user')
   async list(@TokenPayloadParam() tokenPayload: PayloadTokenDto) {
     return await this.urlsService.listUrlsByUser(tokenPayload);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch('shorturl')
-  async updateShortUrl(
-    @Body('originalUrl') originalUrl: string,
-    @TokenPayloadParam() tokenPayload: PayloadTokenDto,
-  ) {
-    return await this.urlsService.updateShortUrl(originalUrl, tokenPayload);
   }
 
   @UseGuards(JwtAuthGuard)
