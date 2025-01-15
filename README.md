@@ -68,6 +68,8 @@ $ npm run test:cov
 ## Deployment
 
 Endpoints
+
+```bash
 POST /users/register
 POST /users/login
 POST /auth/login
@@ -76,6 +78,7 @@ GET /urls/shortUrl
 GET /urls/all/user
 PATCH /urls/originalurl
 DELETE /urls/shortUrl
+```
 
 ## Resources
 
