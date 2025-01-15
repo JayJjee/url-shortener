@@ -11,7 +11,7 @@ export class UrlsService {
     private readonly urlRepository: Repository<Url>,
   ) {}
 
-  async createShortUrl(originalUrl: string, userId: number | null) {
+  async createShortUrl(originalUrl: string, userId: string | null) {
     const shortUrl = this.generateShortUrl();
 
     if (userId !== null) {

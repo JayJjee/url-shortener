@@ -7,8 +7,8 @@ import {
 } from 'typeorm';
 @Entity()
 export class Url {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   originalUrl: string;
@@ -17,7 +17,7 @@ export class Url {
   shortUrl: string;
 
   @Column()
-  userId: number | null;
+  userId: string | null;
 
   @Column({ default: 0 })
   clicks: number;
