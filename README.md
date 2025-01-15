@@ -82,9 +82,11 @@ DELETE /urls/shortUrl
 
 ## Resources
 
+```bash
 NodeJS: v22.13.0
 NestJS: Framework para desenvolvimento das APIs.
 TypeScript: Linguagem utilizada no desenvolvimento.
 PostgreSQL: Banco de dados relacional utilizado para armazenar os dados.
 JWT: Autenticação baseada em tokens.
 Swagger: Documentação das APIs
+```
