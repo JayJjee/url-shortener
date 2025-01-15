@@ -16,7 +16,7 @@ export class Url {
   @Column({ unique: true })
   shortUrl: string;
 
-  @Column()
+  @Column({ nullable: true })
   userId: string | null;
 
   @Column({ default: 0 })

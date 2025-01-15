@@ -18,7 +18,7 @@ import { UrlsModule } from './urls/urls.module';
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: true,
       logging: false,
     }),
     TypeOrmModule.forFeature([User, Url]),
